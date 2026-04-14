@@ -1,0 +1,53 @@
+services:
+  api:
+    image: golang:1.26-bookworm
+    ports:
+      - "${SERVER_EXT}:${SERVER_PORT}"
+    volumes:
+      - ./go.mod:/app/go.mod
+      - ./go.sum:/app/go.sum
+      - ./main.go:/app/main.go
+      - ./src/:/app/src
+      - ./.env:/app/env
+      - ./go-pkg-mod:/go
+    command: sh -c "cd /app && go run main.go"
+    networks:
+      - colab-net
+    restart: unless-stopped
+  db:
+    image: postgres:16-alpine3.22
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PWD}
+      PGPASSWORD: ${DB_PWD}
+    ports:
+      - "${DB_EXT}:${DB_PORT}"
+    volumes:
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - colab-net
+    restart: unless-stopped
+    healthcheck:
+      test: pg_isready -U ${DB_USER} -d ${DB_NAME}
+      interval: 10s
+      timeout: 3s
+      retries: 3
+  redis:
+    image: redis:alpine3.22
+    ports:
+      - "${REDIS_EXT}:${REDIS_PORT}"
+    volumes:
+      - redis_data:/data
+    networks:
+      - colab-net
+    restart: unless-stopped
+
+networks:
+  colab-net:
+    driver: bridge
+
+volumes:
+  redis_data:
+  db_data:
