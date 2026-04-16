@@ -4,8 +4,6 @@ desktop:
 	cd desktop && npm start
 
 server:
-	cd server && go run main.go
-
-########## DOCKER #############
+	$(MAKE) -C ./server/ up
 
 .PHONY: desktop server

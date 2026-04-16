@@ -13,6 +13,7 @@ appengine-generated/
 *.temp
 *.bak
 .DS_Store
+todo.txt
 
 # log file
 *.log
@@ -37,6 +38,12 @@ venv
 # Node
 node_modules
 
+# Golang
+go-pkg-mod
+
 # IDE
 .vscode
 *.swp
+
+# Data
+./server/assets/

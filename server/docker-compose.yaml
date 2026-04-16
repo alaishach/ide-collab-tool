@@ -9,13 +9,19 @@ services:
       - ./main.go:/app/main.go
       - ./src/:/app/src
       - ./.env:/app/env
-      - ./go-pkg-mod:/go
+      - ./go-pkg-mod:/go/pkg/mod
+      - ./assets/:/app/assets
     command: sh -c "cd /app && go run main.go"
     networks:
       - colab-net
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     restart: unless-stopped
   db:
-    image: postgres:16-alpine3.22
+    image: docker.io/library/postgres:18-alpine
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
@@ -25,7 +31,7 @@ services:
       - "${DB_EXT}:${DB_PORT}"
     volumes:
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
-      - db_data:/var/lib/postgresql/data
+      - db_data:/var/lib/postgresql
     networks:
       - colab-net
     restart: unless-stopped
@@ -35,7 +41,12 @@ services:
       timeout: 3s
       retries: 3
   redis:
-    image: redis:alpine3.22
+    image: docker.io/library/redis:8.4.2-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
     ports:
       - "${REDIS_EXT}:${REDIS_PORT}"
     volumes:
