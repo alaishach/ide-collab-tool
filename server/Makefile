@@ -1,9 +1,12 @@
 include .env
 
+AIR_TOML=./air.toml
+
 test:
 	python ./test/system.py
 
 ################### PODMAN #####################
+
 up:
 	podman-compose --env-file ./.env up -d
 	$(MAKE) flogs
@@ -34,10 +37,17 @@ vclean:
 
 fclean: down
 	podman system prune -af --volumes
+	sudo rm -rf .go.cont
 
 ################### Postgres #####################
 
 psql:
 	psql -h 127.0.0.1 -p $(DB_EXT) -U $(DB_USER) -d $(DB_NAME)
 
-.PHONY: test up down re ps logs flogs vclean fclean psql
+################### STARTUP #####################
+
+air:
+	go install github.com/air-verse/air@latest
+	air
+
+.PHONY: test up down re ps logs flogs vclean fclean psql air

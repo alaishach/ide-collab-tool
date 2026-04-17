@@ -6,12 +6,14 @@ services:
     volumes:
       - ./go.mod:/app/go.mod
       - ./go.sum:/app/go.sum
-      - ./main.go:/app/main.go
       - ./src/:/app/src
       - ./.env:/app/.env
-      - ./go-pkg-mod:/go/pkg/mod
+      - ./.go-cont/:/go/
       - ./assets/:/app/assets
-    command: sh -c "cd /app && go run main.go"
+      - ./Makefile:/app/Makefile
+      - ./.air.toml:/app/.air.toml
+      - ./tmp:/app/tmp
+    command: sh -c "cd /app && go mod tidy && make air"
     networks:
       - colab-net
     depends_on:
