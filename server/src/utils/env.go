@@ -13,11 +13,13 @@ var DB_NAME string
 var DB_USER string
 var DB_PWD string
 
+var REDIS_PORT string
+var REDIS_HOST string
+var REDIS_EXT string
+var REDIS_PWD string
+
 func init() {
 	err := godotenv.Load()
-	dir, _ := os.Getwd()
-	println("CWD: " + dir)
-	// println("CWD: " + e.Error())
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
@@ -28,4 +30,9 @@ func init() {
 	DB_NAME = os.Getenv("DB_NAME")
 	DB_USER = os.Getenv("DB_USER")
 	DB_PWD = os.Getenv("DB_PWD")
+
+	REDIS_PORT = os.Getenv("REDIS_PORT")
+	REDIS_HOST = os.Getenv("REDIS_HOST")
+	REDIS_EXT = os.Getenv("REDIS_EXT")
+	REDIS_PWD = os.Getenv("REDIS_PWD")
 }
