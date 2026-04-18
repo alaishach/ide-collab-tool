@@ -34,7 +34,9 @@ flogs:
 
 vclean:
 	if [ $(ENV) = dev ]; then \
-		podman-compose down -v \
+		echo "Removing volumes"; \
+		sleep 2; \
+		podman-compose down -v; \
 	else \
 		echo "WARNING: do not run vclean in prod"; \
 	fi

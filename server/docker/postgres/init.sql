@@ -1,39 +1,50 @@
-CREATE TABLE IF NOT EXISTS "user" (
-    id             SERIAL PRIMARY KEY,
-    username       TEXT UNIQUE NOT NULL,
-    email          TEXT UNIQUE NOT NULL,
-    password       BYTEA NOT NULL,
-    creation       DATE DEFAULT CURRENT_DATE NOT NULL,
-    last_connection TIMESTAMPTZ DEFAULT NOW() NOT NULL
+create table if not exists "user" (
+  id serial primary key,
+  username text unique not null,
+  email text unique not null,
+  password BYTEA not null,
+  creation date default current_date not null,
+  last_connection timestamptz default now() not null
 );
 
-CREATE TABLE IF NOT EXISTS "session" (
-    id            SERIAL PRIMARY KEY,
-    user_id       INTEGER REFERENCES "user"(id) ON DELETE CASCADE NOT NULL,
-    session_token UUID UNIQUE NOT NULL,
-    device_token  TEXT NOT NULL, -- Removed UNIQUE (see notes below)
-    created_at    TIMESTAMPTZ DEFAULT NOW() NOT NULL
+create type session_source_type as ENUM (
+  'Browser',
+  'Mobile App',
+  'Desktop App'
 );
 
-CREATE TABLE IF NOT EXISTS project (
-    id          SERIAL PRIMARY KEY,
-    name        TEXT NOT NULL,
-    admin_id    INTEGER REFERENCES "user"(id) ON DELETE CASCADE NOT NULL,
-    created_at  TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    description TEXT
+create table if not exists session_source (
+  id serial primary key,
+  source_type session_source_type not null,
+  source_name text not null
 );
 
-CREATE TABLE IF NOT EXISTS project_members (
-    project_id  INTEGER REFERENCES project(id) ON DELETE CASCADE NOT NULL,
-    member_id   INTEGER REFERENCES "user"(id) ON DELETE CASCADE NOT NULL,
-    joined_at   TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    PRIMARY KEY (project_id, member_id)
+create table if not exists "session" (
+  id serial primary key,
+  user_id integer references "user" (id) on delete cascade not null,
+  session_token uuid unique not null
+  -- session_source_id integer references session_source (id) on delete cascade not null
 );
 
-CREATE TABLE IF NOT EXISTS "file" (
-    id          SERIAL PRIMARY KEY,
-    project_id  INTEGER REFERENCES project(id) ON DELETE CASCADE NOT NULL,
-    file_path   TEXT NOT NULL, -- relative path from the server/assets/projectName dir
-    created_at  TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    updated_at  TIMESTAMPTZ DEFAULT NOW() NOT NULL
+create table if not exists project (
+  id serial primary key,
+  name text not null,
+  admin_id integer references "user" (id) on delete cascade not null,
+  created_at timestamptz default now() not null,
+  description text
+);
+
+create table if not exists project_members (
+  project_id integer references project (id) on delete cascade not null,
+  member_id integer references "user" (id) on delete cascade not null,
+  joined_at timestamptz default now() not null,
+  primary key (project_id, member_id)
+);
+
+create table if not exists "file" (
+  id serial primary key,
+  project_id integer references project (id) on delete cascade not null,
+  file_path text not null, -- relative path from the server/assets/projectName dir
+  created_at timestamptz default now() not null,
+  updated_at timestamptz default now() not null
 );
