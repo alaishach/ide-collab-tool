@@ -2,7 +2,7 @@ include .env
 
 AIR_TOML=./air.toml
 
-test:
+test: clearDb
 	cd test && python main.py
 
 ################### PODMAN #####################

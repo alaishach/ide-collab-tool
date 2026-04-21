@@ -48,9 +48,6 @@ func handleDuplicate(code int, pgError *pq.Error) error {
 	if detail[0:4] == "Key " {
 		i := strings.Index(detail, "(")
 		j := strings.Index(detail, ")")
-		println("detail: ", detail)
-		println("!!!!!!!!!!!: ", i)
-		println("!!!!!!!!!!!: ", j)
 		col = detail[i+1 : j]
 	}
 	return &PgErrDuplicate{
@@ -61,7 +58,6 @@ func handleDuplicate(code int, pgError *pq.Error) error {
 }
 
 func NewPgError(err error) error {
-	println(reflect.TypeOf(err).Name())
 	var pgError *pq.Error
 	if !errors.As(err, &pgError) {
 		panic("Wrong error type passed to NewPgError" + reflect.TypeOf(err).Name())
@@ -71,7 +67,6 @@ func NewPgError(err error) error {
 	case 23505:
 		return handleDuplicate(code, pgError)
 	}
-	println(pgError.Code)
 	return newPgErrUnknown(code, pgError.Message)
 }
 

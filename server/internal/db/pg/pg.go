@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"server/internal/consts"
+	"server/internal/utils/logger"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -27,5 +28,5 @@ func init() {
 		log.Fatalf("Failed to ping database: %v", err)
 	}
 
-	log.Println("Database connected successfully")
+	logger.Logger.Info("Database connected successfully")
 }

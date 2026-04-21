@@ -25,7 +25,7 @@ def startup():
 def healthCheck():
     startup()
     resp = requests.get(SERVER_API + "/health")
-    checkRespOk(resp, "healtTest")
+    checkRespOk(resp, "healtTest", 200)
     print("Health Check Pass")
 
 if __name__ == "__main__":

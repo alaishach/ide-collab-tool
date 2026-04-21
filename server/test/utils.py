@@ -5,7 +5,7 @@ from requests import Response
 CWD = os.getcwd()
 PROJECT_ROOT = CWD[0:CWD.find("server")+6]
 
-GREEN = "\033[92m"
+GREEN = "\033[32m"
 RED = "\033[91m"
 RESET = "\033[0m"
 
@@ -18,9 +18,9 @@ def getEnv(key) -> str:
         sys.exit(1)
     return value
 
-def checkRespOk(resp: Response, testName: str):
-    if resp.status_code < 200 or resp.status_code > 299:
-        print(f"{RED}failed test '{testName}': {resp.content}")
+def checkRespOk(resp: Response, testName: str, expected_code: int):
+    if resp.status_code != expected_code:
+        print(f"{RED}failed test '{testName}': {resp.status_code} {resp.content}")
         sys.exit(1)
     else:
         print(f"{GREEN}{testName}: test passed")

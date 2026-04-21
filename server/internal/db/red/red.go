@@ -3,8 +3,10 @@ package red
 
 import (
 	"context"
-	"github.com/redis/go-redis/v9"
 	"server/internal/consts"
+	"server/internal/utils/logger"
+
+	"github.com/redis/go-redis/v9"
 )
 
 var Client *redis.Client
@@ -20,5 +22,5 @@ func init() {
 	})
 	Ctx = ctx
 	Client = client
-	println("Redis connected successfully at", addr)
+	logger.Logger.Info("Redis connected successfully at: " + addr)
 }
