@@ -1,9 +1,9 @@
 ######### STARTUP #############
 
-desktop:
-	cd desktop && npm start
+web:
+	cd web && npm run dev
 
 server:
 	$(MAKE) -C ./server/ up
 
-.PHONY: desktop server
+.PHONY: web server

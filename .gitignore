@@ -17,6 +17,7 @@ todo.txt
 
 # log file
 *.log
+logs.txt
 
 # Build artifacts
 dist/

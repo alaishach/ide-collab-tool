@@ -1,7 +1,7 @@
 import requests
 
 import subprocess, sys, datetime, time
-from utils import PROJECT_ROOT, SERVER_API, checkResp200
+from utils import PROJECT_ROOT, SERVER_API, checkRespOk
 
 def startup():
     startTime = datetime.datetime.now().timestamp()
@@ -25,7 +25,7 @@ def startup():
 def healthCheck():
     startup()
     resp = requests.get(SERVER_API + "/health")
-    checkResp200(resp, "healtTest")
+    checkRespOk(resp, "healtTest")
     print("Health Check Pass")
 
 if __name__ == "__main__":

@@ -1,3 +1,3 @@
-from system.health import healthCheck
+from health import healthCheck
 
 healthCheck()

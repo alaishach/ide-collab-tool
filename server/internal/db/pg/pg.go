@@ -4,7 +4,7 @@ package pg
 import (
 	"fmt"
 	"log"
-	"server/internal/utils"
+	"server/internal/consts"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -13,7 +13,7 @@ import (
 var DB *sqlx.DB
 
 func init() {
-	dsn := fmt.Sprintf("user=%s dbname=%s password=%s host=%s port=%s sslmode=disable", utils.DB_USER, utils.DB_NAME, utils.DB_PWD, utils.DB_HOST, utils.DB_PORT)
+	dsn := fmt.Sprintf("user=%s dbname=%s password=%s host=%s port=%s sslmode=disable", consts.DB_USER, consts.DB_NAME, consts.DB_PWD, consts.DB_HOST, consts.DB_PORT)
 
 	var err error
 	DB, err = sqlx.Connect("postgres", dsn)
@@ -21,6 +21,8 @@ func init() {
 		log.Fatalf("Failed to create database connection: %v", err)
 	}
 
+	DB.SetMaxOpenConns(25)
+	DB.SetMaxIdleConns(10)
 	if err = DB.Ping(); err != nil {
 		log.Fatalf("Failed to ping database: %v", err)
 	}

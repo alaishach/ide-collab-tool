@@ -3,11 +3,12 @@ include .env
 AIR_TOML=./air.toml
 
 test:
-	python ./test/system.py
+	cd test && python main.py
 
 ################### PODMAN #####################
 
 up:
+	touch logs.txt
 	podman-compose --env-file ./.env up -d
 	$(MAKE) flogs
 
@@ -42,7 +43,7 @@ vclean:
 	fi
 
 clean: down
-	sudo rm -rf .go.cont server/tmp/main
+	sudo rm -rf .go.cont ./tmp/main ./logs.txt
 
 fclean: clean
 	podman system prune -af --volumes
@@ -51,6 +52,9 @@ fclean: clean
 
 psql:
 	psql -h 127.0.0.1 -p $(DB_EXT) -U $(DB_USER) -d $(DB_NAME)
+
+clearDb:
+	psql -h 127.0.0.1 -p $(DB_EXT) -U $(DB_USER) -d $(DB_NAME) --file=./scripts/clearDb.sql
 
 ################### STARTUP #####################
 

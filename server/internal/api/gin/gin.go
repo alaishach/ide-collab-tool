@@ -4,6 +4,7 @@ package gin
 import (
 	"github.com/gin-gonic/gin"
 	"log"
+	"server/internal/api/handlers/auth"
 	"server/internal/api/handlers/health"
 )
 
@@ -20,6 +21,11 @@ func Run() {
 	Gin = gin.Default()
 	api := Gin.Group("/api")
 
+	// Health
 	api.GET("/health", health.Health)
+
+	// Auth
+	api.POST("/signup", auth.Signup)
+
 	checkRunning()
 }

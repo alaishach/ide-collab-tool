@@ -1,4 +1,4 @@
-package utils
+package consts
 
 import (
 	"github.com/joho/godotenv"

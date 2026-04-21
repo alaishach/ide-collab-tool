@@ -1,4 +1,4 @@
-package utils
+package funcs
 
 func Ternary(a any, b any, result bool) any {
 	if result {

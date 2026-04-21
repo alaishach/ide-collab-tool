@@ -14,6 +14,7 @@ services:
       - ./Makefile:/app/Makefile
       - ./.air.toml:/app/.air.toml
       - ./tmp:/app/tmp
+      - ./logs.txt:/app/logs.txt
     command: sh -c "cd /app && go mod tidy && make air"
     networks:
       - colab-net
