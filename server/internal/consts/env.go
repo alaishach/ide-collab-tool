@@ -51,7 +51,6 @@ func init() {
 	ENV = validValue("ENV", []string{"dev", "prod"})
 
 	DB_PORT = getEnv("DB_PORT")
-	println("PORT!!!!!!!!!!: ", DB_PORT)
 	DB_HOST = getEnv("DB_HOST")
 	DB_EXT = getEnv("DB_EXT")
 	DB_NAME = getEnv("DB_NAME")

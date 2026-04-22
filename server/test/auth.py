@@ -6,6 +6,8 @@ USERNAME = "USERNAME"
 EMAIL = "EMAIL"
 PASSWORD = "PASSWORD"
 
+COOKIES = {}
+
 @deco
 def signup():
     resp = requests.post(SERVER_API+"/signup", json={
@@ -25,36 +27,42 @@ def signup():
         print(f"{GREEN}Signup2: test passed{RESET}")
 
 @deco
-def login():
+def postlogin():
+    global COOKIES
     # success
     resp = requests.post(SERVER_API+"/login", json={
-        "username": USERNAME,
         "email": EMAIL,
         "password": PASSWORD,
     })
-    if resp.status_code == 201:
-        sessionToken = resp.cookies.get("sessionToken")
-        if sessionToken:
-            checkRespOk(resp, "Login1", 201)
-        else:
-            checkRespOk(resp, "Login1", -1)
+    sessionToken = resp.cookies.get("sessionToken")
+    if sessionToken:
+        checkRespOk(resp, "PostLogin1 valid", 201)
+    else:
+        checkRespOk(resp, "PostLogin1 valid", -1)
+    COOKIES = resp.cookies.get_dict()
     # error wrong username
     resp = requests.post(SERVER_API+"/login", json={
-        "username": "Wrong",
-        "email": EMAIL,
+        "email": "wrong",
         "password": PASSWORD,
     })
-    if resp.status_code == 201:
-        sessionToken = resp.cookies.get("sessionToken")
-        if sessionToken:
-            checkRespOk(resp, "Login2", 201)
-        else:
-            checkRespOk(resp, "Login2", -1)
+    checkRespOk(resp, "PostLogin2 error", 401)
+    resp = requests.post(SERVER_API+"/login", json={
+        "email": EMAIL,
+        "password": "wrong",
+    })
+    checkRespOk(resp, "PostLogin3 error", 401)
+
+@deco
+def getlogin():
+    # success
+    resp = requests.get(SERVER_API+"/login", cookies=COOKIES)
+    checkRespOk(resp, "Login2", 200)
 
 @decoTitle
 def auth():
     signup()
-    login()
+    postlogin()
+    getlogin()
 
 if __name__ == "__main__":
     auth()

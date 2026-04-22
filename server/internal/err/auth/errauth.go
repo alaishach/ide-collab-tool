@@ -1,0 +1,2 @@
+// Package errauth
+package errauth

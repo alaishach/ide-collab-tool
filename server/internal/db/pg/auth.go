@@ -2,11 +2,15 @@
 package pg
 
 import (
+	"database/sql"
+	"errors"
 	"server/internal/err/errpg"
 	errgl "server/internal/err/global"
 	"server/internal/err/panics"
+	"strconv"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -27,37 +31,46 @@ func ReadUserCredentials(username string) (*PasswordSchema, error) {
 	return passwordSchema, nil
 }
 
-func CreateSession(userID int, sessionToken uuid.UUID) error {
-	_, err := DB.Exec("insert into sessions (user_id, session_token) values ($1, $2)", userID, sessionToken)
+func CreateSession(user UserTable, sessionToken uuid.UUID) error {
+	_, err := DB.Exec("insert into sessions (user_id, username, session_token) values ($1, $2, $3)", user.UserID, user.Username, sessionToken)
 	if err != nil {
 		return errpg.NewPgError(err)
 	}
 	return nil
 }
 
-func GetUsername(session Session) error {
-	if session.UserID == 0 {
-		panics.PanicMisuse("GetUsername", "UserId inside session object not set")
+func GetUsername(userID int) error {
+	var username string
+	if userID <= 0 {
+		panics.PanicMisuse("GetUsername", "userId has invalid value: "+strconv.Itoa(userID))
 	}
-	return DB.Get(&session, "select username from users where user_id=$1", session.UserID)
+	return DB.Get(&username, "select username from users where id=$1", userID)
 }
 
-// POST login
+// ValidCredentials POST login
 func ValidCredentials(email string, password string) (UserTable, error) {
 	var userTable UserTable
 	err := DB.Get(&userTable, "select id, username, password from users where email=$1", email)
 	if err != nil {
-		panics.PanicDB("ValidCredentials", err)
+		if errors.Is(err, sql.ErrNoRows) {
+			return userTable, errgl.NewErrMessage("No account tied to this email", "401")
+		}
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) {
+			println("IS PQ ERROR!!!!")
+			println("Code: ", pqErr.Code)
+			panics.PanicDB("ValidCredentials", err)
+		}
 	}
 	if e := bcrypt.CompareHashAndPassword(userTable.PasswordHash, []byte(password)); e != nil {
-		return userTable, errgl.NewErrMessage("Password is incorred")
+		return userTable, errgl.NewErrMessage("Password is incorrect", "401")
 	}
 	return userTable, err
 }
 
-// GET login
-func GetSessionByToken(sessionToken string) (*Session, error) {
-	var session Session
+// GetSessionByToken GET login
+func GetSessionByToken(sessionToken string) (*SessionData, error) {
+	var session SessionData
 	err := DB.Get(&session, "select user_id, from sessions where session_token=$1", sessionToken)
 	if err != nil {
 		return nil, errpg.NewPgError(err)

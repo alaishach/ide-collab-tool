@@ -57,10 +57,15 @@ clearDb:
 	if [ $(ENV) = dev ]; then \
 		echo "WARNING: Emptying the database"; \
 		sleep 1; \
-		psql -h 127.0.0.1 -p $(DB_EXT) -U $(DB_USER) -d $(DB_NAME) --file=./scripts/clearDb.sql; \
+		PGPASSWORD=$(DB_PWD) psql -h 127.0.0.1 -p $(DB_EXT) -U $(DB_USER) -d $(DB_NAME) --file=./scripts/clearDb.sql; \
 	else \
 		echo "ERROR: can not run clearDb in prod"; \
 	fi
+
+################### Postgres #####################
+
+redis:
+	redis-cli -h 127.0.0.1 -p $(REDIS_PORT) -a $(REDIS_PWD)
 
 ################### STARTUP #####################
 

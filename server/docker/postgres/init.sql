@@ -4,7 +4,8 @@ create table if not exists users (
   email text unique not null,
   password BYTEA not null,
   creation date default current_date not null,
-  last_connection timestamptz default now() not null
+  last_connection timestamptz default now() not null,
+  unique (id, username)
 );
 
 create type session_source_type as ENUM (
@@ -21,8 +22,10 @@ create table if not exists session_source (
 
 create table if not exists sessions (
   id serial primary key,
-  user_id integer references users (id) on delete cascade not null,
-  session_token uuid unique not null
+  user_id integer not null,
+  username text not null,
+  session_token uuid unique not null,
+  foreign key (user_id, username) references users (id, username) on delete cascade
   -- session_source_id integer references session_source (id) on delete cascade not null
 );
 

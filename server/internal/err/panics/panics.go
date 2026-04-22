@@ -8,7 +8,13 @@ func PanicErr(msg string, err error) {
 
 func PanicDB(funcName string, err error) {
 	if err != nil {
-		panic("Error with db function '" + funcName + "': " + err.Error())
+		panic("Error with postgresql db function '" + funcName + "': " + err.Error())
+	}
+}
+
+func PanicRedis(funcName string, err error) {
+	if err != nil {
+		panic("Error with postgresql db function '" + funcName + "': " + err.Error())
 	}
 }
 

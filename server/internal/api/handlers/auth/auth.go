@@ -3,13 +3,15 @@ package auth
 
 import (
 	"errors"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 
 	"server/internal/db/pg"
-	// "server/internal/db/red"
+	"server/internal/db/red"
+
 	// "server/internal/utils/funcs"
 	"server/internal/err/errpg"
 	errgl "server/internal/err/global"
@@ -54,23 +56,28 @@ type loginData struct {
 }
 
 func PostLogin(c *gin.Context) {
-	println("!!!!! received post login")
 	var data loginData
 	if err := c.ShouldBindJSON(&data); err != nil {
 		c.JSON(400, reqs.SimpleResponseMessage("invalid request format"))
 		return
 	}
+
 	// validation
 	logger.Logger.Debug("received signup request data: ", "email", data.Email, "password", data.Password)
 	userTable, error := pg.ValidCredentials(data.Email, data.Password)
 	var errMessage *errgl.ErrMessage
-	if errors.As(error, &errMessage) {
+	if errors.As(error, &errMessage) && errMessage != nil && errMessage.Type == "401" {
+		c.JSON(401, reqs.SimpleResponseMessage(errMessage.Message))
+		return
+	} else if error != nil {
 		c.JSON(500, errMessage.Message)
 		return
 	}
 
+	println("credentials are valid!!!!!!")
+	// creating session
 	sessionToken := uuid.New()
-	if err := pg.CreateSession(userTable.UserID, sessionToken); err != nil {
+	if err := pg.CreateSession(userTable, sessionToken); err != nil {
 		var pgErr *errpg.PgErr
 		if errors.As(err, &pgErr) {
 			c.JSON(500, "Failed to create session")
@@ -79,6 +86,23 @@ func PostLogin(c *gin.Context) {
 		panics.PanicDB("CreateSession", err)
 		return
 	}
+	session := pg.SessionData{
+		SessionToken: sessionToken,
+		UserID:       userTable.UserID,
+		Username:     userTable.Username,
+	}
+	red.AddSession(session)
 	reqs.SetServerCookie(c, "sessionToken", sessionToken.String())
 	c.JSON(201, reqs.SimpleResponseMessage("Session created"))
+}
+
+func GetLogin(c *gin.Context) {
+	sessionToken, err := c.Cookie("sessionToken")
+	if errors.Is(err, http.ErrNoCookie) {
+		c.JSON(401, reqs.SimpleResponseMessage("Not authorized"))
+	}
+	id := red.GetSession(sessionToken)
+	if id == nil {
+		pg.GetSessionByToken(sessionToken)
+	}
 }
