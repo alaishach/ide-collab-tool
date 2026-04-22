@@ -1,10 +1,14 @@
 package consts
 
 import (
-	"github.com/joho/godotenv"
 	"log"
 	"os"
+	"slices"
+
+	"github.com/joho/godotenv"
 )
+
+var ENV string
 
 var DB_PORT string
 var DB_HOST string
@@ -18,21 +22,46 @@ var REDIS_HOST string
 var REDIS_EXT string
 var REDIS_PWD string
 
+var SERVER_DOMAIN string
+
+func validValue(varName string, validValues []string) string {
+	value := os.Getenv(varName)
+	if value == "" {
+		panic("Env variable '" + varName + "' has not been defined in .env")
+	}
+	if !slices.Contains(validValues, value) {
+		panic("Env variable '" + varName + "' has not been set to a valid value")
+	}
+	return value
+}
+
+func getEnv(varName string) string {
+	value := os.Getenv(varName)
+	if value == "" {
+		panic("Env variable '" + varName + "' has not been defined in .env")
+	}
+	return value
+}
+
 func init() {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
+	ENV = validValue("ENV", []string{"dev", "prod"})
 
-	DB_PORT = os.Getenv("DB_PORT")
-	DB_HOST = os.Getenv("DB_HOST")
-	DB_EXT = os.Getenv("DB_EXT")
-	DB_NAME = os.Getenv("DB_NAME")
-	DB_USER = os.Getenv("DB_USER")
-	DB_PWD = os.Getenv("DB_PWD")
+	DB_PORT = getEnv("DB_PORT")
+	println("PORT!!!!!!!!!!: ", DB_PORT)
+	DB_HOST = getEnv("DB_HOST")
+	DB_EXT = getEnv("DB_EXT")
+	DB_NAME = getEnv("DB_NAME")
+	DB_USER = getEnv("DB_USER")
+	DB_PWD = getEnv("DB_PWD")
 
-	REDIS_PORT = os.Getenv("REDIS_PORT")
-	REDIS_HOST = os.Getenv("REDIS_HOST")
-	REDIS_EXT = os.Getenv("REDIS_EXT")
-	REDIS_PWD = os.Getenv("REDIS_PWD")
+	REDIS_PORT = getEnv("REDIS_PORT")
+	REDIS_HOST = getEnv("REDIS_HOST")
+	REDIS_EXT = getEnv("REDIS_EXT")
+	REDIS_PWD = getEnv("REDIS_PWD")
+
+	SERVER_DOMAIN = getEnv("SERVER_DOMAIN")
 }

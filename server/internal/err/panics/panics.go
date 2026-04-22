@@ -11,3 +11,7 @@ func PanicDB(funcName string, err error) {
 		panic("Error with db function '" + funcName + "': " + err.Error())
 	}
 }
+
+func PanicMisuse(funcName string, description string) {
+	panic("Misuse of function" + funcName + ": " + description)
+}

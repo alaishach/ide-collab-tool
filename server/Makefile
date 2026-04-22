@@ -35,11 +35,11 @@ flogs:
 
 vclean:
 	if [ $(ENV) = dev ]; then \
-		echo "Removing volumes"; \
+		echo "WARNING: Removing volumes"; \
 		sleep 2; \
 		podman-compose down -v; \
 	else \
-		echo "WARNING: do not run vclean in prod"; \
+		echo "ERROR: can not run vclean in prod"; \
 	fi
 
 clean: down
@@ -54,7 +54,13 @@ psql:
 	psql -h 127.0.0.1 -p $(DB_EXT) -U $(DB_USER) -d $(DB_NAME)
 
 clearDb:
-	psql -h 127.0.0.1 -p $(DB_EXT) -U $(DB_USER) -d $(DB_NAME) --file=./scripts/clearDb.sql
+	if [ $(ENV) = dev ]; then \
+		echo "WARNING: Emptying the database"; \
+		sleep 1; \
+		psql -h 127.0.0.1 -p $(DB_EXT) -U $(DB_USER) -d $(DB_NAME) --file=./scripts/clearDb.sql; \
+	else \
+		echo "ERROR: can not run clearDb in prod"; \
+	fi
 
 ################### STARTUP #####################
 

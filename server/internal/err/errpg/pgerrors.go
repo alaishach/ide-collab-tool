@@ -1,5 +1,5 @@
-// Package pgerrors
-package pgerrors
+// Package errpg
+package errpg
 
 import (
 	"errors"
@@ -11,9 +11,15 @@ import (
 	"github.com/lib/pq"
 )
 
+// Postgres error code
+
 type PgErr struct {
 	Code    int    `binding:"required"`
 	Message string `binding:"required"`
+}
+
+func (e *PgErr) Error() string {
+	return e.Message
 }
 
 type PgErrDuplicate struct {
@@ -35,7 +41,7 @@ func (e *PgErrUnknown) Error() string {
 	return e.Message
 }
 
-func newPgErrUnknown(code int, message string) *PgErrUnknown {
+func NewPgErrUnknown(code int, message string) *PgErrUnknown {
 	return &PgErrUnknown{
 		Code:    code,
 		Message: message,
@@ -67,7 +73,7 @@ func NewPgError(err error) error {
 	case 23505:
 		return handleDuplicate(code, pgError)
 	}
-	return newPgErrUnknown(code, pgError.Message)
+	return NewPgErrUnknown(code, pgError.Message)
 }
 
 func GetDbErrorResp(err error) (int, map[string]string) {

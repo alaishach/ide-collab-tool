@@ -26,6 +26,7 @@ func Run() {
 
 	// Auth
 	api.POST("/signup", auth.Signup)
+	api.POST("/login", auth.PostLogin)
 
 	checkRunning()
 }

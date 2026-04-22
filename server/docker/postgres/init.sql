@@ -26,6 +26,8 @@ create table if not exists sessions (
   -- session_source_id integer references session_source (id) on delete cascade not null
 );
 
+create index if not exists idx_session_token on sessions (session_token);
+
 create table if not exists projects (
   id serial primary key,
   name text not null,
