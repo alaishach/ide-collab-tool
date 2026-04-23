@@ -57,8 +57,6 @@ func ValidCredentials(email string, password string) (UserTable, error) {
 		}
 		var pqErr *pq.Error
 		if errors.As(err, &pqErr) {
-			println("IS PQ ERROR!!!!")
-			println("Code: ", pqErr.Code)
 			panics.PanicDB("ValidCredentials", err)
 		}
 	}
@@ -69,11 +67,17 @@ func ValidCredentials(email string, password string) (UserTable, error) {
 }
 
 // GetSessionByToken GET login
-func GetSessionByToken(sessionToken string) (*SessionData, error) {
+func GetSessionByToken(sessionToken string) *SessionData {
 	var session SessionData
-	err := DB.Get(&session, "select user_id, from sessions where session_token=$1", sessionToken)
-	if err != nil {
-		return nil, errpg.NewPgError(err)
+	err := DB.Get(&session, "select user_id from sessions where session_token=$1", sessionToken)
+	if err != nil && errors.Is(err, sql.ErrNoRows) {
+		return nil
+	} else if err != nil {
+		if pqErr, ok := err.(*pq.Error); ok {
+			errpg.NewPgError(pqErr)
+		} else {
+			panics.PanicDB("GetSessionByToken", err)
+		}
 	}
-	return &session, nil
+	return &session
 }

@@ -4,13 +4,12 @@ package red
 import (
 	"context"
 	"encoding/json"
+	"github.com/redis/go-redis/v9"
 	"server/internal/consts"
 	"server/internal/db/pg"
 	"server/internal/err/panics"
 	"server/internal/utils/logger"
 	"time"
-
-	"github.com/redis/go-redis/v9"
 )
 
 var Client *redis.Client
@@ -37,14 +36,19 @@ func AddSession(session pg.SessionData) {
 	panics.PanicRedis("AddSession", err)
 }
 
-func GetSession(sessionToken string) *int {
-	id, err := Client.Get(Ctx, sessionToken).Result()
-	println("!!!!! GetSession: ", id)
-	println("!!!!! GetSession: ", err)
-	if err != nil {
-		println("!!!!! GetSession error: ", err.Error())
+func GetSession(sessionToken string) *pg.SessionData {
+	val, err := Client.Get(Ctx, sessionToken).Result()
+	// if key is not found redis return redis.Nil
+	if err == redis.Nil {
+		logger.Logger.Debug("Session Token not found: ", "sessionToken", sessionToken)
 		return nil
 	}
-	i := 0
-	return &i
+	if err != nil {
+		panics.PanicRedis("GetSession getting from redis", err)
+	}
+	var session pg.SessionData
+	if err := json.Unmarshal([]byte(val), &session); err != nil {
+		panics.PanicRedis("Get Session Unmarshalling", err)
+	}
+	return &session
 }

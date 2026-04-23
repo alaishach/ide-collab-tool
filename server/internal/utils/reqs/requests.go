@@ -26,7 +26,7 @@ func LogBody(c *gin.Context) {
 	slog.Info("Request body", "body", string(body))
 }
 
-func SimpleResponseMessage(msg string) map[string]string {
+func SimpleMessage(msg string) map[string]string {
 	return map[string]string{"message": msg}
 }
 

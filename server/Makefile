@@ -65,7 +65,7 @@ clearDb:
 ################### Postgres #####################
 
 redis:
-	redis-cli -h 127.0.0.1 -p $(REDIS_PORT) -a $(REDIS_PWD)
+	redis-cli -h 127.0.0.1 -p $(REDIS_EXT) -a $(REDIS_PWD)
 
 ################### STARTUP #####################
 

@@ -14,7 +14,7 @@ func PanicDB(funcName string, err error) {
 
 func PanicRedis(funcName string, err error) {
 	if err != nil {
-		panic("Error with postgresql db function '" + funcName + "': " + err.Error())
+		panic("Error with redis function '" + funcName + "': " + err.Error())
 	}
 }
 

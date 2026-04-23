@@ -35,7 +35,7 @@ func Signup(c *gin.Context) {
 	// TODO add field validation, create auth tokens, hash password
 	var data signupData
 	if err := c.ShouldBindJSON(&data); err != nil {
-		c.JSON(400, reqs.SimpleResponseMessage("invalid request format"))
+		c.JSON(400, reqs.SimpleMessage("invalid request format"))
 		return
 	}
 	logger.Logger.Debug("received signup request data: ", "username", data.Username, "email", data.Email, "password", data.Password)
@@ -43,11 +43,11 @@ func Signup(c *gin.Context) {
 	panics.PanicErr("Bcrypt failed to generated password", err)
 	err = pg.CreateUser(data.Username, data.Email, passwordHash)
 	if err != nil {
-		statusCode, marsh := errpg.GetDbErrorResp(err)
+		statusCode, marsh := errpg.GetDBErrorResp(err)
 		c.JSON(statusCode, marsh)
 		return
 	}
-	c.JSON(201, reqs.SimpleResponseMessage("Account created"))
+	c.JSON(201, reqs.SimpleMessage("Account created"))
 }
 
 type loginData struct {
@@ -58,7 +58,7 @@ type loginData struct {
 func PostLogin(c *gin.Context) {
 	var data loginData
 	if err := c.ShouldBindJSON(&data); err != nil {
-		c.JSON(400, reqs.SimpleResponseMessage("invalid request format"))
+		c.JSON(400, reqs.SimpleMessage("invalid request format"))
 		return
 	}
 
@@ -67,14 +67,13 @@ func PostLogin(c *gin.Context) {
 	userTable, error := pg.ValidCredentials(data.Email, data.Password)
 	var errMessage *errgl.ErrMessage
 	if errors.As(error, &errMessage) && errMessage != nil && errMessage.Type == "401" {
-		c.JSON(401, reqs.SimpleResponseMessage(errMessage.Message))
+		c.JSON(401, reqs.SimpleMessage(errMessage.Message))
 		return
 	} else if error != nil {
 		c.JSON(500, errMessage.Message)
 		return
 	}
 
-	println("credentials are valid!!!!!!")
 	// creating session
 	sessionToken := uuid.New()
 	if err := pg.CreateSession(userTable, sessionToken); err != nil {
@@ -93,16 +92,21 @@ func PostLogin(c *gin.Context) {
 	}
 	red.AddSession(session)
 	reqs.SetServerCookie(c, "sessionToken", sessionToken.String())
-	c.JSON(201, reqs.SimpleResponseMessage("Session created"))
+	c.JSON(201, reqs.SimpleMessage("Session created"))
 }
 
 func GetLogin(c *gin.Context) {
 	sessionToken, err := c.Cookie("sessionToken")
 	if errors.Is(err, http.ErrNoCookie) {
-		c.JSON(401, reqs.SimpleResponseMessage("Not authorized"))
+		c.JSON(401, reqs.SimpleMessage("Not authorized"))
 	}
-	id := red.GetSession(sessionToken)
-	if id == nil {
-		pg.GetSessionByToken(sessionToken)
+	session := red.GetSession(sessionToken)
+	if session == nil {
+		session = pg.GetSessionByToken(sessionToken)
+		if session == nil || session.UserID == 0 {
+			c.JSON(401, reqs.SimpleMessage("session expired"))
+			return
+		}
 	}
+	c.JSON(200, reqs.SimpleMessage("success"))
 }

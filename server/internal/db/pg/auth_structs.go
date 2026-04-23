@@ -9,9 +9,9 @@ type PasswordSchema struct {
 }
 
 type SessionData struct {
-	UserID       int       `db:"user_id"`
-	Username     string    `db:"username"`
-	SessionToken uuid.UUID `db:"session_token"`
+	UserID       int       `db:"user_id" json:"user_id"`
+	Username     string    `db:"username" json:"username"`
+	SessionToken uuid.UUID `db:"session_token" json:"session_token"`
 }
 
 type UserTable struct {

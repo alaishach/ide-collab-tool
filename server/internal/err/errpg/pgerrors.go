@@ -4,8 +4,8 @@ package errpg
 import (
 	"errors"
 	"reflect"
+	"server/internal/err/panics"
 	"server/internal/utils/reqs"
-	"strconv"
 	"strings"
 
 	"github.com/lib/pq"
@@ -14,7 +14,7 @@ import (
 // Postgres error code
 
 type PgErr struct {
-	Code    int    `binding:"required"`
+	Code    string `binding:"required"`
 	Message string `binding:"required"`
 }
 
@@ -23,7 +23,7 @@ func (e *PgErr) Error() string {
 }
 
 type PgErrDuplicate struct {
-	Code    int    `binding:"required"`
+	Code    string `binding:"required"`
 	Message string `binding:"required"`
 	Column  string `binding:"required"`
 }
@@ -33,7 +33,7 @@ func (e *PgErrDuplicate) Error() string {
 }
 
 type PgErrUnknown struct {
-	Code    int    `binding:"required"`
+	Code    string `binding:"required"`
 	Message string `binding:"required"`
 }
 
@@ -41,14 +41,14 @@ func (e *PgErrUnknown) Error() string {
 	return e.Message
 }
 
-func NewPgErrUnknown(code int, message string) *PgErrUnknown {
+func NewPgErrUnknown(code string, message string) *PgErrUnknown {
 	return &PgErrUnknown{
 		Code:    code,
 		Message: message,
 	}
 }
 
-func handleDuplicate(code int, pgError *pq.Error) error {
+func handleDuplicate(code string, pgError *pq.Error) error {
 	detail := pgError.Detail
 	col := "some column"
 	if detail[0:4] == "Key " {
@@ -63,23 +63,45 @@ func handleDuplicate(code int, pgError *pq.Error) error {
 	}
 }
 
+type PgErrInvalidInput struct {
+	Code    string `binding:"required"`
+	Message string `binding:"required"`
+}
+
+func (e *PgErrInvalidInput) Error() string {
+	return e.Message
+}
+
+// TODO make sure to have proper error message with column not just table name
+func handleInvalidInput(code string, pgError *pq.Error) error {
+	detail := pgError.Detail
+	println("!!!!!!!!!!!: ", detail)
+	return &PgErrInvalidInput{
+		Code:    code,
+		Message: "Invalid input" + pgError.Table,
+	}
+
+}
+
 func NewPgError(err error) error {
 	var pgError *pq.Error
 	if !errors.As(err, &pgError) {
-		panic("Wrong error type passed to NewPgError" + reflect.TypeOf(err).Name())
+		panics.PanicMisuse("NewPgError", "Wrong error type passed to NewPgError"+reflect.TypeOf(err).Name())
 	}
-	code, _ := strconv.Atoi(string(pgError.Code))
+	code := string(pgError.Code)
 	switch code {
-	case 23505:
+	case "23505":
 		return handleDuplicate(code, pgError)
+	case "22P02":
+		return handleInvalidInput(code, pgError)
 	}
 	return NewPgErrUnknown(code, pgError.Message)
 }
 
-func GetDbErrorResp(err error) (int, map[string]string) {
+func GetDBErrorResp(err error) (int, map[string]string) {
 	var pgErrDuplicate *PgErrDuplicate
 	if errors.As(err, &pgErrDuplicate) {
-		return 409, reqs.SimpleResponseMessage(pgErrDuplicate.Column + " is already taken")
+		return 409, reqs.SimpleMessage(pgErrDuplicate.Column + " is already taken")
 	}
-	return 200, reqs.SimpleResponseMessage("")
+	return 200, reqs.SimpleMessage("")
 }

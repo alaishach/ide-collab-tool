@@ -57,6 +57,8 @@ def getlogin():
     # success
     resp = requests.get(SERVER_API+"/login", cookies=COOKIES)
     checkRespOk(resp, "Login2", 200)
+    resp = requests.get(SERVER_API+"/login", cookies={"sessionToken":"something random"})
+    checkRespOk(resp, "Login2", 401, "session expired")
 
 @decoTitle
 def auth():
