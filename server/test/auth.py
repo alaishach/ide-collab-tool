@@ -10,13 +10,13 @@ COOKIES = {}
 
 @deco
 def signup():
-    resp = requests.post(SERVER_API+"/signup", json={
+    resp = requests.post(SERVER_API+"/users", json={
         "username": USERNAME,
         "email": EMAIL,
         "password": PASSWORD,
     })
     checkRespOk(resp, "Signup1", 201)
-    resp = requests.post(SERVER_API+"/signup", json={
+    resp = requests.post(SERVER_API+"/users", json={
         "username": USERNAME,
         "email": EMAIL,
         "password": PASSWORD,
@@ -30,7 +30,7 @@ def signup():
 def postlogin():
     global COOKIES
     # success
-    resp = requests.post(SERVER_API+"/login", json={
+    resp = requests.post(SERVER_API+"/sessions", json={
         "email": EMAIL,
         "password": PASSWORD,
     })
@@ -41,40 +41,40 @@ def postlogin():
         checkRespOk(resp, "PostLogin1 valid", -1)
     COOKIES = resp.cookies.get_dict()
     # error wrong username
-    resp = requests.post(SERVER_API+"/login", json={
+    resp = requests.post(SERVER_API+"/sessions", json={
         "email": "wrong",
         "password": PASSWORD,
     })
     checkRespOk(resp, "PostLogin2 error", 401)
-    resp = requests.post(SERVER_API+"/login", json={
+    resp = requests.post(SERVER_API+"/sessions", json={
         "email": EMAIL,
         "password": "wrong",
     })
     checkRespOk(resp, "PostLogin3 error", 401)
 
 @deco
-def getlogin():
+def patchlogin():
     # valid
-    resp = requests.get(SERVER_API+"/login", cookies=COOKIES)
+    resp = requests.patch(SERVER_API+"/sessions", cookies=COOKIES)
     checkRespOk(resp, "Login2", 200)
     # error
-    resp = requests.get(SERVER_API+"/login", cookies={"sessionToken":"something random"})
+    resp = requests.patch(SERVER_API+"/sessions", cookies={"sessionToken":"something random"})
     checkRespOk(resp, "Login2", 401, "session expired")
 
 @deco
 def logout():
     # valid
-    resp = requests.delete(SERVER_API+"/logout", cookies=COOKIES)
+    resp = requests.delete(SERVER_API+"/sessions", cookies=COOKIES)
     checkRespOk(resp, "Login2", 200)
     # error
-    resp = requests.delete(SERVER_API+"/logout", cookies=COOKIES)
+    resp = requests.delete(SERVER_API+"/sessions", cookies=COOKIES)
     checkRespOk(resp, "Login2", 401, "unauthorized")
 
 @decoTitle
 def auth():
     signup()
     postlogin()
-    getlogin()
+    patchlogin()
     logout()
 
 if __name__ == "__main__":

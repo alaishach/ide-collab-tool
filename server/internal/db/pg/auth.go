@@ -10,7 +10,6 @@ import (
 	"server/internal/err/errpg"
 	errgl "server/internal/err/global"
 	"server/internal/err/panics"
-	"strconv"
 )
 
 func CreateUser(username string, email string, password []byte) error {
@@ -21,29 +20,12 @@ func CreateUser(username string, email string, password []byte) error {
 	return nil
 }
 
-func ReadUserCredentials(username string) (*PasswordSchema, error) {
-	var passwordSchema *PasswordSchema
-	err := DB.Get(passwordSchema, "select password, id from users where username=$1", username)
-	if err != nil {
-		return nil, errpg.NewPgError(err)
-	}
-	return passwordSchema, nil
-}
-
 func CreateSession(user UserTable, sessionToken uuid.UUID) error {
 	_, err := DB.Exec("insert into sessions (user_id, username, session_token) values ($1, $2, $3)", user.UserID, user.Username, sessionToken)
 	if err != nil {
 		return errpg.NewPgError(err)
 	}
 	return nil
-}
-
-func GetUsername(userID int) error {
-	var username string
-	if userID <= 0 {
-		panics.PanicMisuse("GetUsername", "userId has invalid value: "+strconv.Itoa(userID))
-	}
-	return DB.Get(&username, "select username from users where id=$1", userID)
 }
 
 // ValidCredentials POST login

@@ -26,10 +26,10 @@ func Run() {
 
 	// TODO rename
 	// Auth
-	api.POST("/signup", auth.Signup)
-	api.POST("/login", auth.PostLogin)
-	api.GET("/login", auth.GetLogin)
-	api.DELETE("/logout", auth.Logout)
+	api.POST("/users", auth.Signup)
+	api.POST("/sessions", auth.PostLogin)
+	api.PATCH("/sessions", auth.GetLogin)
+	api.DELETE("/sessions", auth.Logout)
 
 	checkRunning()
 }

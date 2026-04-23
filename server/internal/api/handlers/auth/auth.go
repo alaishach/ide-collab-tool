@@ -38,7 +38,6 @@ func Signup(c *gin.Context) {
 		c.JSON(400, reqs.SimpleMessage("invalid request format"))
 		return
 	}
-	logger.Logger.Debug("received signup request data: ", "username", data.Username, "email", data.Email, "password", data.Password)
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(data.Password), 14)
 	panics.PanicErr("Bcrypt failed to generated password", err)
 	err = pg.CreateUser(data.Username, data.Email, passwordHash)

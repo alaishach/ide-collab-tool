@@ -5,6 +5,7 @@ import (
 	"errors"
 	"reflect"
 	"server/internal/err/panics"
+	"server/internal/utils/logger"
 	"server/internal/utils/reqs"
 	"strings"
 
@@ -103,5 +104,6 @@ func GetDBErrorResp(err error) (int, map[string]string) {
 	if errors.As(err, &pgErrDuplicate) {
 		return 409, reqs.SimpleMessage(pgErrDuplicate.Column + " is already taken")
 	}
-	return 200, reqs.SimpleMessage("")
+	logger.Logger.Error("Unhandled error: " + err.Error())
+	return 500, reqs.SimpleMessage("Unexpected Error")
 }
