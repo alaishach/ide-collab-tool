@@ -11,11 +11,12 @@ def startup():
         out = subprocess.run(["make logs"], cwd=PROJECT_ROOT, shell=True, capture_output=True).stdout.decode()
         now = datetime.datetime.now().timestamp()
         startupTime = now - startTime
-        if out.find("[GIN-debug] Listening and serving HTTP on :") >= 0:
+        if out.find("Server init successful if no error") >= 0:
+            time.sleep(1)
             if startupTime < 1:
-                print(f"{GREEN}Gin Server already running{RESET}")
+                print(f"{GREEN}Server already running{RESET}")
             else:
-                print(f"{GREEN}Gin Server startup successfull\nStartup time: {RESET}", startupTime)
+                print(f"{GREEN}Server startup successfull\nStartup time: {RESET}", startupTime)
             return
         if startupTime >= 120:
             print(f"{RED}Error starting up server{RESET}")
@@ -25,6 +26,7 @@ def startup():
 
 @deco
 def apiHealth():
+    print("SERVER_API: ", SERVER_API)
     resp = requests.get(SERVER_API + "/health")
     checkRespOk(resp, "healthTest", 200)
 

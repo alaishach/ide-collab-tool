@@ -36,8 +36,10 @@ def getEnv(key) -> str:
     return value
 
 def checkRespOk(resp: Response, testName: str, expected_code: int, expected_message: Optional[str] = None):
-    if resp.status_code != expected_code or (expected_message and resp.json()["message"] != expected_message):
-        print(f"{RED}failed test '{testName}': {resp.status_code} {resp.content}")
+    print("THIS CONDITION: ", expected_message != None and resp.json()["message"] != expected_message)
+    if resp.status_code != expected_code or (expected_message != None and resp.json()["message"] != expected_message):
+        print(f"{RED}Failed Test '{testName}': {resp.status_code} {resp.content}")
+        print(f"{RED}Expected code: {expected_code}\nExpected message {expected_message}")
         sys.exit(1)
     else:
         print(f"{GREEN}{testName}: test passed")

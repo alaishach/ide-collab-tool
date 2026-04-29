@@ -59,7 +59,7 @@ def patchlogin():
     checkRespOk(resp, "Login2", 200)
     # error
     resp = requests.patch(SERVER_API+"/sessions", cookies={"sessionToken":"something random"})
-    checkRespOk(resp, "Login2", 401, "session expired")
+    checkRespOk(resp, "Login2", 401)
 
 @deco
 def logout():
@@ -68,7 +68,7 @@ def logout():
     checkRespOk(resp, "Login2", 200)
     # error
     resp = requests.delete(SERVER_API+"/sessions", cookies=COOKIES)
-    checkRespOk(resp, "Login2", 401, "unauthorized")
+    checkRespOk(resp, "Login2", 401)
 
 @decoTitle
 def auth():

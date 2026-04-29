@@ -1,19 +1,22 @@
+// Package reqs
 package reqs
 
 import (
 	"bytes"
-	"github.com/gin-gonic/gin"
+	"encoding/json"
 	"io"
 	"log/slog"
 	"net/http"
-	"server/internal/consts"
+	"reflect"
+	errgl "server/internal/err/global"
+	"server/internal/err/panics"
+	"server/internal/utils/funcs"
 	"server/internal/utils/logger"
+
+	"github.com/gin-gonic/gin"
 )
 
-const halfYear = 3600 * 24 * 180
-
 func LogBody(c *gin.Context) {
-	// 1. Read the body
 	body, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		logger.Logger.Error("Failed to read request body", "error", err)
@@ -26,14 +29,43 @@ func LogBody(c *gin.Context) {
 	slog.Info("Request body", "body", string(body))
 }
 
-func SimpleMessage(msg string) map[string]string {
-	return map[string]string{"message": msg}
+func GetCookieValue(req *http.Request, name string) (string, error) {
+	cookie, err := req.Cookie(name)
+	if err != nil {
+		return "", err
+	}
+	return cookie.Value, nil
 }
 
-func SetServerCookie(c *gin.Context, name string, value string) {
-	if consts.ENV == "dev" {
-		c.SetCookie(name, value, halfYear, "/api", consts.SERVER_DOMAIN, false, true)
-	} else {
-		http.SetCookie(c.Writer, &http.Cookie{Name: name, Value: value, Domain: consts.SERVER_DOMAIN, Path: "/api", MaxAge: halfYear, HttpOnly: true, Secure: true, SameSite: http.SameSiteDefaultMode})
+func ParseBodyJSON[T any](w http.ResponseWriter, req *http.Request, data *T) error {
+	rt := reflect.TypeOf(data)
+	if rt.Kind() != reflect.Pointer || rt.Elem().Kind() != reflect.Struct {
+		panics.PanicMisuse("ParseBodyJSON", "data is not a pointer to a struct")
 	}
+	deco := json.NewDecoder(req.Body)
+	deco.DisallowUnknownFields()
+	if err := deco.Decode(data); err != nil {
+		logger.Logger.Debug("json unmarshalling request body failed: " + err.Error())
+		return errgl.NewHTTPError(422, "invalid JSON, verify all required fields are present")
+	}
+	t, v := funcs.TypeVal(*data)
+	for i := range t.NumField() {
+		ptr := v.Field(i)
+		if ptr.Kind() != reflect.Pointer {
+			panics.PanicMisuse("ParseBodyJSON", "attribute is not a pointer type")
+		}
+		if ptr.IsNil() {
+			field := t.Field(i)
+			if field.Tag.Get("binding") == "required" {
+				// TODO in prod maybe don't give the field name info away
+				return errgl.NewHTTPError(400, "missing field: "+field.Name)
+
+			} else if field.Tag.Get("default") == "" {
+				println("TODO set up default bruuuh")
+			}
+		}
+		// do field validation
+		// value := ptr.Elem()
+	}
+	return nil
 }

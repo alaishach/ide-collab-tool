@@ -1,3 +1,4 @@
+// Package panics
 package panics
 
 func PanicErr(msg string, err error) {
@@ -19,5 +20,5 @@ func PanicRedis(funcName string, err error) {
 }
 
 func PanicMisuse(funcName string, description string) {
-	panic("Misuse of function" + funcName + ": " + description)
+	panic("Misuse of function '" + funcName + "': " + description)
 }

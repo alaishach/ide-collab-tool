@@ -23,6 +23,7 @@ var REDIS_EXT string
 var REDIS_PWD string
 
 var SERVER_DOMAIN string
+var SERVER_PORT string
 
 func validValue(varName string, validValues []string) string {
 	value := os.Getenv(varName)
@@ -63,4 +64,5 @@ func init() {
 	REDIS_PWD = getEnv("REDIS_PWD")
 
 	SERVER_DOMAIN = getEnv("SERVER_DOMAIN")
+	SERVER_PORT = getEnv("SERVER_PORT")
 }

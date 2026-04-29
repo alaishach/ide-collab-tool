@@ -14,6 +14,7 @@ appengine-generated/
 *.bak
 .DS_Store
 todo.txt
+notes.txt
 
 # log file
 *.log
@@ -36,6 +37,7 @@ tmp/
 # python
 __pycache__/
 venv
+pyrightconfig.json
 
 # Node
 node_modules

@@ -4,20 +4,18 @@ package auth
 import (
 	"errors"
 	"net/http"
-
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-	"golang.org/x/crypto/bcrypt"
-
+	"server/internal/api/schemas"
 	"server/internal/db/pg"
 	"server/internal/db/red"
-
-	// "server/internal/utils/funcs"
 	"server/internal/err/errpg"
 	errgl "server/internal/err/global"
 	"server/internal/err/panics"
 	"server/internal/utils/logger"
 	"server/internal/utils/reqs"
+	"server/internal/utils/resps"
+
+	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // GET login check in redis and then in postgres and then add to redis if in postgres
@@ -25,51 +23,42 @@ import (
 // POST Signup
 // DELETE logout
 
-type signupData struct {
-	Username string `json:"username" binding:"required"`
-	Email    string `json:"email" binding:"required"`
-	Password string `json:"password" binding:"required"`
-}
-
-func Signup(c *gin.Context) {
+func Signup(w http.ResponseWriter, req *http.Request) {
 	// TODO add field validation, create auth tokens, hash password
-	var data signupData
-	if err := c.ShouldBindJSON(&data); err != nil {
-		c.JSON(400, reqs.SimpleMessage("invalid request format"))
+	var data schemas.SignupData
+	if err := reqs.ParseBodyJSON(w, req, &data); err != nil {
+		resps.RespMessage(w, 400, "invalid request format")
 		return
 	}
-	passwordHash, err := bcrypt.GenerateFromPassword([]byte(data.Password), 14)
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(*data.Password), 14)
 	panics.PanicErr("Bcrypt failed to generated password", err)
-	err = pg.CreateUser(data.Username, data.Email, passwordHash)
+	err = pg.CreateUser(*data.Username, *data.Email, passwordHash)
 	if err != nil {
 		statusCode, marsh := errpg.GetDBErrorResp(err)
-		c.JSON(statusCode, marsh)
+		resps.RespJSON(w, statusCode, marsh)
 		return
 	}
-	c.JSON(201, reqs.SimpleMessage("Account created"))
+	resps.RespMessage(w, 201, "Account created")
 }
 
-type loginData struct {
-	Email    string `json:"email" binding:"required"`
-	Password string `json:"password" binding:"required"`
-}
-
-func PostLogin(c *gin.Context) {
-	var data loginData
-	if err := c.ShouldBindJSON(&data); err != nil {
-		c.JSON(400, reqs.SimpleMessage("invalid request format"))
+func PostLogin(w http.ResponseWriter, req *http.Request) {
+	var data schemas.LoginData
+	// TODO do a function that json marshals and writes to http.ResponseWriter if there is an error
+	// it should be able to check which params are missing from loginData
+	if err := reqs.ParseBodyJSON(w, req, &data); err != nil {
+		resps.RespMessage(w, 400, "invalid request format")
 		return
 	}
 
 	// validation
 	logger.Logger.Debug("received signup request data: ", "email", data.Email, "password", data.Password)
-	userTable, error := pg.ValidCredentials(data.Email, data.Password)
+	userTable, error := pg.ValidCredentials(*data.Email, *data.Password)
 	var errMessage *errgl.ErrMessage
 	if errors.As(error, &errMessage) && errMessage != nil && errMessage.Type == "401" {
-		c.JSON(401, reqs.SimpleMessage(errMessage.Message))
+		resps.RespMessage(w, 401, (errMessage.Message))
 		return
 	} else if error != nil {
-		c.JSON(500, errMessage.Message)
+		resps.RespMessage(w, 500, errMessage.Message)
 		return
 	}
 
@@ -78,7 +67,7 @@ func PostLogin(c *gin.Context) {
 	if err := pg.CreateSession(userTable, sessionToken); err != nil {
 		var pgErr *errpg.PgErr
 		if errors.As(err, &pgErr) {
-			c.JSON(500, "Failed to create session")
+			resps.RespMessage(w, 500, "Failed to create session")
 			return
 		}
 		panics.PanicDB("CreateSession", err)
@@ -90,38 +79,39 @@ func PostLogin(c *gin.Context) {
 		Username:     userTable.Username,
 	}
 	red.AddSession(session)
-	reqs.SetServerCookie(c, "sessionToken", sessionToken.String())
-	c.JSON(201, reqs.SimpleMessage("Session created"))
+	resps.SetServerCookie(w, "sessionToken", sessionToken.String())
+	resps.RespMessage(w, 201, "Session created")
 }
 
-func GetLogin(c *gin.Context) {
-	sessionToken, err := c.Cookie("sessionToken")
+func GetLogin(w http.ResponseWriter, req *http.Request) {
+	sessionToken, err := reqs.GetCookieValue(req, "sessionToken")
 	if errors.Is(err, http.ErrNoCookie) {
-		c.JSON(401, reqs.SimpleMessage("Not authorized"))
+		resps.RespMessage(w, 401, "Not authorized")
+		return
 	}
 	session := red.GetSession(sessionToken)
 	if session == nil {
 		session = pg.GetSessionByToken(sessionToken)
 		if session == nil || session.UserID == 0 {
-			c.JSON(401, reqs.SimpleMessage("session expired"))
+			resps.RespMessage(w, 401, "Not authorized")
 			return
 		}
 	}
 	red.AddSession(*session)
-	c.JSON(200, reqs.SimpleMessage("success"))
+	resps.RespMessage(w, 200, "success")
 }
 
-func Logout(c *gin.Context) {
-	sessionToken, err := c.Cookie("sessionToken")
+func Logout(w http.ResponseWriter, req *http.Request) {
+	sessionToken, err := reqs.GetCookieValue(req, "sessionToken")
 	if errors.Is(err, http.ErrNoCookie) {
-		c.JSON(401, reqs.SimpleMessage("Not authorized"))
+		resps.RespMessage(w, 401, "Unauthorized")
 	}
 	red.DeleteSession(sessionToken)
 	if err := pg.DeleteSession(sessionToken); err != nil {
 		if errors.Is(err, errgl.ErrNotAuthorized) {
-			c.JSON(401, reqs.SimpleMessage("unauthorized"))
+			resps.RespMessage(w, 401, "Unauthorized")
 		} else {
-			c.JSON(500, reqs.SimpleMessage("Server side error"))
+			resps.RespMessage(w, 500, "Server side error")
 		}
 	}
 }

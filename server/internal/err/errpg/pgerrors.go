@@ -3,13 +3,11 @@ package errpg
 
 import (
 	"errors"
+	"github.com/lib/pq"
 	"reflect"
 	"server/internal/err/panics"
 	"server/internal/utils/logger"
-	"server/internal/utils/reqs"
 	"strings"
-
-	"github.com/lib/pq"
 )
 
 // Postgres error code
@@ -102,8 +100,8 @@ func NewPgError(err error) error {
 func GetDBErrorResp(err error) (int, map[string]string) {
 	var pgErrDuplicate *PgErrDuplicate
 	if errors.As(err, &pgErrDuplicate) {
-		return 409, reqs.SimpleMessage(pgErrDuplicate.Column + " is already taken")
+		return 409, map[string]string{"message": pgErrDuplicate.Column + " is already taken"}
 	}
 	logger.Logger.Error("Unhandled error: " + err.Error())
-	return 500, reqs.SimpleMessage("Unexpected Error")
+	return 500, map[string]string{"message": pgErrDuplicate.Column + "Unhandled Error"}
 }
